@@ -3,7 +3,7 @@ import google.generativeai as genai
 
 # ---------- Configure Gemini API ----------
 # Replace this with your working Gemini API key
-genai.configure(api_key="AIzaSyCMprjgZrkdhY-fHXLf-v_RrFHm1mtdJEo")
+genai.configure(api_key="API_KEY")
 
 # Update to the correct model name for your account
 model = genai.GenerativeModel("gemini-2.0-flash")
