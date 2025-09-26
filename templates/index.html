@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Two Users Gemini SQL Chat</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      display: flex; 
+      justify-content: center; 
+      gap: 30px; 
+      margin: 20px; 
+      background: #f0f2f5; 
+    }
+    .chat { 
+      border: 1px solid #ccc; 
+      border-radius: 8px; 
+      padding: 15px; 
+      width: 400px; 
+      background: #fff; 
+      display: flex; 
+      flex-direction: column; 
+    }
+    .messages { 
+      border: 1px solid #eee; 
+      border-radius: 6px; 
+      height: 300px; 
+      overflow-y: auto; 
+      padding: 10px; 
+      margin-bottom: 10px; 
+      background: #fafafa;
+    }
+    .msg { margin: 5px 0; padding: 8px; border-radius: 6px; max-width: 90%; }
+    .user { background: #DCF8C6; align-self: flex-end; text-align: right; }
+    .bot { background: #EAEAEA; align-self: flex-start; text-align: left; }
+    input { flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ccc; }
+    .input-container { display: flex; gap: 10px; }
+    button { padding: 8px 15px; border: none; border-radius: 6px; background: #007bff; color: #fff; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    .tokens { font-size: 12px; color: gray; margin-top: 5px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="chat" id="user1">
+    <h3>User 1</h3>
+    <div class="messages" id="messages1"></div>
+    <div class="input-container">
+      <input type="text" id="input1" placeholder="Type SQL request...">
+      <button onclick="sendPrompt('user1')">Send</button>
+    </div>
+    <div class="tokens" id="tokens1"></div>
+  </div>
+
+  <div class="chat" id="user2">
+    <h3>User 2</h3>
+    <div class="messages" id="messages2"></div>
+    <div class="input-container">
+      <input type="text" id="input2" placeholder="Type SQL request...">
+      <button onclick="sendPrompt('user2')">Send</button>
+    </div>
+    <div class="tokens" id="tokens2"></div>
+  </div>
+
+<script>
+function addMessage(messagesDiv, text, sender) {
+  const msgDiv = document.createElement("div");
+  msgDiv.className = "msg " + sender;
+  msgDiv.textContent = text;
+  messagesDiv.appendChild(msgDiv);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+async function sendPrompt(userId) {
+  const input = document.getElementById(userId === "user1" ? "input1" : "input2");
+  const messagesDiv = document.getElementById(userId === "user1" ? "messages1" : "messages2");
+  const tokensDiv = document.getElementById(userId === "user1" ? "tokens1" : "tokens2");
+
+  const prompt = input.value.trim();
+  if (!prompt) return;
+
+  addMessage(messagesDiv, prompt, "user");
+  input.value = "";
+
+  try {
+    const res = await fetch("/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: userId, prompt: prompt })
+    });
+
+    const data = await res.json();
+    addMessage(messagesDiv, data.sql, "bot");
+
+    tokensDiv.textContent = `Tokens (Schema+Prompt): ${data.tokens_schema}, Tokens (Prompt only): ${data.tokens_prompt}`;
+  } catch (err) {
+    addMessage(messagesDiv, "Error: " + err, "bot");
+  }
+}
+
+// Send message on Enter key press
+document.getElementById("input1").addEventListener("keypress", function(e) {
+  if (e.key === "Enter") sendPrompt("user1");
+});
+document.getElementById("input2").addEventListener("keypress", function(e) {
+  if (e.key === "Enter") sendPrompt("user2");
+});
+</script>
+</body>
+</html>
